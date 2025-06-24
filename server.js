@@ -40,7 +40,7 @@ app.post('/api/create', (req, res) => {
             if (err) return res.status(500).json({ message: 'সার্ভারে সমস্যা হয়েছে।' });
 
             // এই URL টি আমরা পর্ব ৫-এ ঠিক করব
-            const shortUrl = `https://your-backend-will-live-here.com/${shortCode}`;
+            const shortUrl = `https://devil-x-url-shortener-backend.onrender.com/${shortCode}`;
             return res.status(201).json({ shortUrl });
         });
     });
