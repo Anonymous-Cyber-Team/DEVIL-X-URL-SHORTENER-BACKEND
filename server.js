@@ -8,7 +8,12 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// ---> আগের app.use(cors()); লাইনটির জায়গায় এই নতুন কোডটি বসাও <---
+
+// নির্দিষ্ট ডোমেইনকে অনুমতি দেওয়ার জন্য CORS কনফিগার করা
+app.use(cors({
+    origin: 'https://anonymous-cyber-team.github.io'
+}));
 app.use(express.json());
 
 const db = new sqlite3.Database('./urls.db', (err) => {
