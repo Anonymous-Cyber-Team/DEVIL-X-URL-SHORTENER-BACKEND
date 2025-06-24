@@ -1,4 +1,4 @@
-// --- server.js ফাইলের নতুন এবং সঠিক কোড ---
+// --- server.js ফাইলের চূড়ান্ত এবং পরিষ্কার কোড ---
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -8,50 +8,34 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ---> আগের app.use(cors()); লাইনটির জায়গায় এই নতুন কোডটি বসাও <---
-
-// নির্দিষ্ট ডোমেইনকে অনুমতি দেওয়ার জন্য CORS কনফিগার করা
-// ---> আগের app.use(cors({...})); লাইনটির জায়গায় এই নতুন এবং শক্তিশালী কোডটি বসাও <---
-
 // শক্তিশালী এবং নির্দিষ্ট CORS কনফিগারেশন
 const corsOptions = {
-  origin: 'https://anonymous-cyber-team.github.io',
-  methods: ['GET', 'POST'], // কোন কোন মেথড অনুমতিপ্রাপ্ত
-  allowedHeaders: ['Content-Type', 'Authorization'] // কোন কোন হেডার অনুমতিপ্রাপ্ত
+  // '*' মানে যেকোনো ওয়েবসাইটকে অনুমতি দেওয়া, ডিবাগিংয়ের জন্য।
+  // কাজ হয়ে গেলে, নিরাপত্তার জন্য এটিকে 'https://anonymous-cyber-team.github.io'-তে পরিবর্তন করে দিও।
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'], // OPTIONS মেথড যোগ করা হয়েছে
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-// প্রথমে OPTIONS রিকোয়েস্ট হ্যান্ডেল করা
-app.options('*', cors(corsOptions)); // সব রুটের জন্য preflight রিকোয়েস্ট চালু করা
-
-// এরপর সব রিকোয়েস্টের জন্য cors ব্যবহার করা
+// CORS মিডলওয়্যারটি একবারেই সঠিকভাবে ব্যবহার করা
 app.use(cors(corsOptions));
-
-// --- এর পরেই আপনার app.use(express.json()); লাইনটি থাকবে ---
 app.use(express.json());
 
+// --- ডাটাবেস সেটআপ ---
 const db = new sqlite3.Database('./urls.db', (err) => {
     if (err) console.error(err.message);
     else console.log('ডাটাবেসের সাথে সফলভাবে সংযোগ হয়েছে।');
 });
 
-// টেবিল তৈরি এবং আপডেট করার জন্য ফাংশন
+// টেবিল তৈরি এবং আপডেট করার ফাংশন
 const initializeDatabase = () => {
-    // প্রথমে নিশ্চিত করা হচ্ছে যে টেবিলটি আছে
     db.run('CREATE TABLE IF NOT EXISTS urls (id INTEGER PRIMARY KEY, short_code TEXT UNIQUE, long_url TEXT, expires_at TEXT)', (err) => {
-        if (err) {
-            console.error("টেবিল তৈরি করতে সমস্যা:", err);
-            return;
-        }
+        if (err) return console.error("টেবিল তৈরি করতে সমস্যা:", err);
 
-        // ---> এই নতুন কোডটি টেবিল আপডেট করবে <---
-        // চেক করা হচ্ছে 'expires_at' কলামটি আছে কিনা
         db.all("PRAGMA table_info(urls)", (err, columns) => {
-            if (err) {
-                console.error("টেবিলের তথ্য পেতে সমস্যা:", err);
-                return;
-            }
+            if (err) return console.error("টেবিলের তথ্য পেতে সমস্যা:", err);
+
             const hasExpiresAt = columns.some(col => col.name === 'expires_at');
-            // যদি না থাকে, তবেই শুধু যোগ করা হবে
             if (!hasExpiresAt) {
                 db.run("ALTER TABLE urls ADD COLUMN expires_at TEXT", (alterErr) => {
                     if (alterErr) console.error("কলাম যোগ করতে সমস্যা:", alterErr);
@@ -61,12 +45,9 @@ const initializeDatabase = () => {
         });
     });
 };
-
-// সার্ভার চালু হওয়ার সাথে সাথে ডাটাবেস ইনিশিয়ালাইজ করা
 initializeDatabase();
 
 // --- API রুটগুলো ---
-
 app.post('/api/create', (req, res) => {
     const { longUrl, customName, expiration } = req.body;
     if (!longUrl) return res.status(400).json({ message: 'লম্বা URL প্রয়োজন।' });
@@ -90,7 +71,7 @@ app.post('/api/create', (req, res) => {
         db.run('INSERT INTO urls (short_code, long_url, expires_at) VALUES (?, ?, ?)', [shortCode, longUrl, expires_at], function (err) {
             if (err) return res.status(500).json({ message: 'সার্ভারে সমস্যা হয়েছে।' });
 
-            const shortUrl = `https://devil-x.onrender.com/${shortCode}`;
+            const shortUrl = `https://devil-x-api.onrender.com/${shortCode}`; // আপনার ছোট করা Render URL
             return res.status(201).json({ shortUrl });
         });
     });
