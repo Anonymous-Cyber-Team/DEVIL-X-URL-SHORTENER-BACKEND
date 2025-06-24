@@ -93,7 +93,7 @@ app.get('/:shortCode', (req, res) => {
 });
 
 // --- স্বয়ংক্রিয় ক্লিনার রুট ---
-const CLEANUP_SECRET = process.env.CLEANUP_SECRET || 'DevilX_is_the_Best_123_#';
+const CLEANUP_SECRET = process.env.CLEANUP_SECRET || '@Devil-X@';
 app.post('/api/cleanup', (req, res) => {
     const authHeader = req.headers['authorization'];
     if (authHeader !== `Bearer ${CLEANUP_SECRET}`) {
