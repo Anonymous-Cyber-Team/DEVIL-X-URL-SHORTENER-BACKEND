@@ -105,4 +105,29 @@ app.post('/api/cleanup', (req, res) => {
     });
 });
 
+// ---> server.js ফাইলে এই নতুন "মাস্টার ক্লিনার" রুটটি যোগ করো <---
+
+// --- মাস্টার ক্লিনার রুট (সাবধানতার সাথে ব্যবহার করবে) ---
+// এই রুটটি কল করলে ডাটাবেসের সব লিঙ্ক মুছে যাবে (পার্মানেন্ট সহ)
+app.post('/api/cleanup/all', (req, res) => {
+    // আমরা একই গোপন কী ব্যবহার করব নিরাপত্তার জন্য
+    const authHeader = req.headers['authorization'];
+    if (authHeader !== `Bearer ${CLEANUP_SECRET}`) {
+        return res.status(401).json({ message: 'Unauthorized: অ্যাক্সেস ডিনাইড' });
+    }
+
+    const sql = 'DELETE FROM urls'; // <-- এই কমান্ডটি টেবিলের সব ডেটা ডিলিট করে
+
+    db.run(sql, function (err) {
+        if (err) {
+            console.error("মাস্টার ক্লিনআপ করার সময় সমস্যা হয়েছে:", err.message);
+            return res.status(500).json({ message: 'সার্ভারে সমস্যা হয়েছে।' });
+        }
+        console.log(`ডাটাবেস রিসেট করা হয়েছে। ${this.changes} টি লিঙ্ক সফলভাবে মুছে ফেলা হয়েছে।`);
+        res.status(200).json({ message: 'সম্পূর্ণ ক্লিনআপ সফল', total_deleted_count: this.changes });
+    });
+});
+
+// --- এর পরেই আপনার app.listen(...) লাইনটি থাকবে ---
+
 app.listen(port, () => console.log(`সার্ভার http://localhost:${port} এ চলছে`));
