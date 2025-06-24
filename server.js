@@ -1,3 +1,5 @@
+// --- server.js ফাইলের নতুন এবং সঠিক কোড ---
+
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const { nanoid } = require('nanoid');
@@ -14,7 +16,38 @@ const db = new sqlite3.Database('./urls.db', (err) => {
     else console.log('ডাটাবেসের সাথে সফলভাবে সংযোগ হয়েছে।');
 });
 
-db.run('CREATE TABLE IF NOT EXISTS urls (id INTEGER PRIMARY KEY, short_code TEXT UNIQUE, long_url TEXT, expires_at TEXT)');
+// টেবিল তৈরি এবং আপডেট করার জন্য ফাংশন
+const initializeDatabase = () => {
+    // প্রথমে নিশ্চিত করা হচ্ছে যে টেবিলটি আছে
+    db.run('CREATE TABLE IF NOT EXISTS urls (id INTEGER PRIMARY KEY, short_code TEXT UNIQUE, long_url TEXT, expires_at TEXT)', (err) => {
+        if (err) {
+            console.error("টেবিল তৈরি করতে সমস্যা:", err);
+            return;
+        }
+
+        // ---> এই নতুন কোডটি টেবিল আপডেট করবে <---
+        // চেক করা হচ্ছে 'expires_at' কলামটি আছে কিনা
+        db.all("PRAGMA table_info(urls)", (err, columns) => {
+            if (err) {
+                console.error("টেবিলের তথ্য পেতে সমস্যা:", err);
+                return;
+            }
+            const hasExpiresAt = columns.some(col => col.name === 'expires_at');
+            // যদি না থাকে, তবেই শুধু যোগ করা হবে
+            if (!hasExpiresAt) {
+                db.run("ALTER TABLE urls ADD COLUMN expires_at TEXT", (alterErr) => {
+                    if (alterErr) console.error("কলাম যোগ করতে সমস্যা:", alterErr);
+                    else console.log("expires_at কলাম সফলভাবে যোগ হয়েছে।");
+                });
+            }
+        });
+    });
+};
+
+// সার্ভার চালু হওয়ার সাথে সাথে ডাটাবেস ইনিশিয়ালাইজ করা
+initializeDatabase();
+
+// --- API রুটগুলো ---
 
 app.post('/api/create', (req, res) => {
     const { longUrl, customName, expiration } = req.body;
@@ -39,7 +72,6 @@ app.post('/api/create', (req, res) => {
         db.run('INSERT INTO urls (short_code, long_url, expires_at) VALUES (?, ?, ?)', [shortCode, longUrl, expires_at], function (err) {
             if (err) return res.status(500).json({ message: 'সার্ভারে সমস্যা হয়েছে।' });
 
-            // এই URL টি আমরা পর্ব ৫-এ ঠিক করব
             const shortUrl = `https://devil-x-url-shortener-backend.onrender.com/${shortCode}`;
             return res.status(201).json({ shortUrl });
         });
