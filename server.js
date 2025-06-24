@@ -11,9 +11,22 @@ const port = process.env.PORT || 3000;
 // ---> আগের app.use(cors()); লাইনটির জায়গায় এই নতুন কোডটি বসাও <---
 
 // নির্দিষ্ট ডোমেইনকে অনুমতি দেওয়ার জন্য CORS কনফিগার করা
-app.use(cors({
-    origin: 'https://anonymous-cyber-team.github.io'
-}));
+// ---> আগের app.use(cors({...})); লাইনটির জায়গায় এই নতুন এবং শক্তিশালী কোডটি বসাও <---
+
+// শক্তিশালী এবং নির্দিষ্ট CORS কনফিগারেশন
+const corsOptions = {
+  origin: 'https://anonymous-cyber-team.github.io',
+  methods: ['GET', 'POST'], // কোন কোন মেথড অনুমতিপ্রাপ্ত
+  allowedHeaders: ['Content-Type', 'Authorization'] // কোন কোন হেডার অনুমতিপ্রাপ্ত
+};
+
+// প্রথমে OPTIONS রিকোয়েস্ট হ্যান্ডেল করা
+app.options('*', cors(corsOptions)); // সব রুটের জন্য preflight রিকোয়েস্ট চালু করা
+
+// এরপর সব রিকোয়েস্টের জন্য cors ব্যবহার করা
+app.use(cors(corsOptions));
+
+// --- এর পরেই আপনার app.use(express.json()); লাইনটি থাকবে ---
 app.use(express.json());
 
 const db = new sqlite3.Database('./urls.db', (err) => {
