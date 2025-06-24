@@ -71,7 +71,7 @@ app.post('/api/create', (req, res) => {
         db.run('INSERT INTO urls (short_code, long_url, expires_at) VALUES (?, ?, ?)', [shortCode, longUrl, expires_at], function (err) {
             if (err) return res.status(500).json({ message: 'সার্ভারে সমস্যা হয়েছে।' });
 
-            const shortUrl = `https://devil-x-api.onrender.com/${shortCode}`; // আপনার ছোট করা Render URL
+            const shortUrl = `https://devil-x.onrender.com/${shortCode}`; // আপনার ছোট করা Render URL
             return res.status(201).json({ shortUrl });
         });
     });
